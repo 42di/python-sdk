@@ -1,5 +1,10 @@
-# Python SDK for 42DI
+# 42di Python SDK 
 
+### Install
+
+```bash
+pip install git+https://github.com/42di/python-sdk
+```
 
 ### import
 
