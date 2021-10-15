@@ -1,23 +1,45 @@
 # Python SDK for 42DI
 
+
+### import
+
 ```python
-import di
+import di #42di
+
 import pandas_datareader as pdr
+```
 
-p = di.Project("42di.cn/<YOUR_USER_ID>/<YOUR_PROJECT_ID>", "<YOUR_ACCESS_TOKEN>")
+### Init SDK
 
-t = p.table("us_gdp")
+```python
+project = di.Project("42di.cn/<YOUR_USER_ID>/<YOUR_PROJECT_ID>", "<YOUR_ACCESS_TOKEN>")
+```
 
-if t.get() is None:
-    t.create()
+### Create table
 
-t.update("title", "US GDP")
+```python
+table = project.table("us_gdp")
 
+if not table.exists():
+    table.create()
+
+table.update("title", "US GDP")
+```
+
+### Upload data
+
+```python
 df = pdr.get_data_fred('GDP')
 
-t.update_schema(di.schema(df))
-t.put_csv(df)
+# Update table schema
+table.update_schema(di.schema(df))
 
+table.put_csv(df)
+```
+
+### Read data
+
+```python
 df = t.read()
 
 print(df)
