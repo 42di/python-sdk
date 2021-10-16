@@ -5,6 +5,33 @@ import swagger_client as sw
 import json
 import pandas
 
+class Project():
+    def __init__(self, project, access_token, host=None):
+        self.project = project.strip('/')
+        s = self.project.split("/")
+        if len(s) != 3:
+            raise ValueError('invalid project')
+        else:
+            self.host = s[0]
+            self.team_id = s[1]
+            self.project_id = s[2]
+
+        self.project = project
+        self.access_token = access_token
+
+        cfg = sw.Configuration()
+        #cfg.api_key["token"] = access_token
+        
+        cfg.host = ("https://" + self.host if host is None else host) + "/api/v1"
+
+        self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer "+access_token)
+
+    def table(self, table_name):
+        return Table(self.team_id, self.project_id, table_name, self.sw_client, self.access_token)
+
+    def list_tables(self):
+        return self.table(None).list()
+
 class Table():
     def __init__(self, team_id, project_id, table_name, sw_client, token=None):
         self.team_id = team_id
@@ -66,14 +93,14 @@ class Table():
         if r.status_code == 303:
             return r.headers.get('Location')
         else:
-            raise error(r.status_code)
+            raise BaseException(r.status_code)
     
     def _read_df(self, file_name, format):
         url = self._get_file_url(file_name)
         if url and format == "text/csv":
             return pandas.read_csv(url)
         else:
-            raise error("Unsupported.")
+            raise BaseException("Unsupported.")
 
     def read(self):
         dfs = []
@@ -83,33 +110,6 @@ class Table():
             dfs.append(df)
         return pandas.concat(dfs)
         
-class Project():
-    def __init__(self, project, access_token, host=None):
-        self.project = project.strip('/')
-        s = self.project.split("/")
-        if len(s) != 3:
-            raise ValueError('invalid project')
-        else:
-            self.host = s[0]
-            self.team_id = s[1]
-            self.project_id = s[2]
-
-        self.project = project
-        self.access_token = access_token
-
-        cfg = sw.Configuration()
-        #cfg.api_key["token"] = access_token
-        
-        cfg.host = ("https://" + self.host if host is None else host) + "/api/v1"
-
-        self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer "+access_token)
-
-    def table(self, table_name):
-        return Table(self.team_id, self.project_id, table_name, self.sw_client, self.access_token)
-
-    def list_tables(self):
-        return self.table(None).list()
-    
 def schema(df):
     columns = []
     for name in df.index.names:
@@ -124,4 +124,29 @@ def schema(df):
             "data_type": str(value)
         })
     return {"columns": columns}
-    
+
+def _parse_identity(identity):
+    s = identity.strip().split('/')
+    if len(s) != 4:
+        raise ValueError('invalid identity, it shold be like 42di.cn/your_id/your_project/your_table')
+    project_id = '/'.join(s[:-1])
+    table_name = s[-1:][0]
+    return (project_id, table_name)
+
+def put(identity, df, token, crate_table=True, update_schema=False):
+    project_id, table_name = _parse_identity(identity)
+    project = Project(project_id, token)
+
+    table = project.table(table_name)
+    if not table.exists():
+        table.create()
+
+    table.put_csv(df)
+
+    if update_schema:
+        table.update_schema(schema(df))
+
+def read(identity, token):
+    project_id, table_name = _parse_identity(identity)
+    project = Project(project_id, token)
+    return project.table(table_name).read()
