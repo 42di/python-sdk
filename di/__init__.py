@@ -77,12 +77,15 @@ class Table():
         body = df.to_csv()
         self.put(body, file_name, tag, "text/csv")
         
-    def put_parquet(self, df, file_name, tag=""):
+    def put_parquet(self, df, file_name=None, tag=None):
         body = df.to_parquet()
         self.put(body, file_name, tag, "application/parquet")
 
     def files(self):
         return self.api.list_table_data_files(self.team_id, self.project_id, self.table_name)
+
+    def get_file_meta(self, data_file_name):
+        return self.api.get_table_data_file_meta(self.team_id, self.project_id, self.table_name, data_file_name)
 
     def _get_file_url(self, file_name):
         url = '/'.join([self.sw_client.configuration.host, "teams", self.team_id, "projects", self.project_id, "tables", self.table_name, "data", file_name])
@@ -93,14 +96,16 @@ class Table():
         if r.status_code == 303:
             return r.headers.get('Location')
         else:
-            raise BaseException(r.status_code)
+            raise BaseException("Get DataFile content failed: " % str(r.status_code))
     
     def _read_df(self, file_name, format):
         url = self._get_file_url(file_name)
         if url and format == "text/csv":
             return pandas.read_csv(url)
+        elif format == "application/parquet":
+            return pandas.read_parquet(url)
         else:
-            raise BaseException("Unsupported.")
+            raise BaseException("File format unsupported.")
 
     def read(self):
         dfs = []
@@ -133,15 +138,15 @@ def _parse_identity(identity):
     table_name = s[-1:][0]
     return (project_id, table_name)
 
-def put(identity, df, token, crate_table=True, update_schema=False):
+def put(identity, df, token, create_table=True, update_schema=False):
     project_id, table_name = _parse_identity(identity)
     project = Project(project_id, token)
 
     table = project.table(table_name)
-    if not table.exists():
+    if not table.exists() and create_table:
         table.create()
 
-    table.put_csv(df)
+    table.put_parquet(df)
 
     if update_schema:
         table.update_schema(schema(df))
