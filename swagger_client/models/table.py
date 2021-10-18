@@ -33,8 +33,8 @@ class Table(object):
         'project_id': 'str',
         'title': 'str',
         'description': 'str',
-        'schema': 'object',
-        'schema_extra': 'object',
+        'schema': 'str',
+        'schema_extra': 'str',
         'owners': 'list[str]',
         'creator': 'str',
         'created': 'datetime',
@@ -205,7 +205,7 @@ class Table(object):
 
 
         :return: The schema of this Table.  # noqa: E501
-        :rtype: object
+        :rtype: str
         """
         return self._schema
 
@@ -215,7 +215,7 @@ class Table(object):
 
 
         :param schema: The schema of this Table.  # noqa: E501
-        :type: object
+        :type: str
         """
 
         self._schema = schema
@@ -226,7 +226,7 @@ class Table(object):
 
 
         :return: The schema_extra of this Table.  # noqa: E501
-        :rtype: object
+        :rtype: str
         """
         return self._schema_extra
 
@@ -236,7 +236,7 @@ class Table(object):
 
 
         :param schema_extra: The schema_extra of this Table.  # noqa: E501
-        :type: object
+        :type: str
         """
 
         self._schema_extra = schema_extra

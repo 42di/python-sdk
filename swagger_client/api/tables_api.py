@@ -149,6 +149,7 @@ class TablesApi(object):
         :param str team_id: the **Team** identity (required)
         :param str project_id: the **Project** identity (required)
         :param str table_name: the **Table** name (required)
+        :param bool schema: get schema
         :return: Table
                  If the method is called asynchronously,
                  returns the request thread.
@@ -172,12 +173,13 @@ class TablesApi(object):
         :param str team_id: the **Team** identity (required)
         :param str project_id: the **Project** identity (required)
         :param str table_name: the **Table** name (required)
+        :param bool schema: get schema
         :return: Table
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['team_id', 'project_id', 'table_name']  # noqa: E501
+        all_params = ['team_id', 'project_id', 'table_name', 'schema']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -216,6 +218,8 @@ class TablesApi(object):
             path_params['table_name'] = params['table_name']  # noqa: E501
 
         query_params = []
+        if 'schema' in params:
+            query_params.append(('schema', params['schema']))  # noqa: E501
 
         header_params = {}
 

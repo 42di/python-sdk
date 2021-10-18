@@ -1,20 +1,19 @@
 import di
-import pandas_datareader as pdr
+from pandas_datareader import wb
 
-p = di.Project("42di.cn/<YOUR_USER_ID>/<YOUR_PROJECT_ID>", "<YOUR_ACCESS_TOKEN>")
+project = di.Project("42di.cn/Marvin/tutorials", "{your_token}")
 
-t = p.table("us_gdp")
+table = project.table("humans")
 
-if not t.exists():
-    t.create()
+if not table.exists():
+    table.create()
+    table.update("title", "Humans")
 
-t.update("title", "US GDP")
+df = wb.download(indicator='SP.POP.TOTL', country=['CHN', 'US'], start=1970, end=2021)
 
-df = pdr.get_data_fred('GDP')
+table.update_schema(di.schema(df))
+table.put_parquet(df)
 
-t.update_schema(di.schema(df))
-t.put_csv(df)
-
-df = t.read()
+df = table.read()
 
 print(df)

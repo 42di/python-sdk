@@ -1,0 +1,14 @@
+rest.py: 190
+
+elif isinstance(body, str) or isinstance(body, bytes):
+    if isinstance(body, str) :
+        request_body = body.encode("utf-8")
+    else:
+        request_body = body
+
+table_api.py: 801
+def put_table_data_file_with_http_info
+
+# HTTP header `Content-Type`
+#header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+#    ['application/octet-stream'])  # noqa: E501

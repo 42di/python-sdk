@@ -44,8 +44,8 @@ class Table():
     def list(self):
         return self.api.list_tables(self.team_id, self.project_id)
 
-    def get(self):
-        return self.api.get_table(self.team_id, self.project_id, self.table_name)
+    def get(self, get_schema=False):
+        return self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
     
     def exists(self):
         return self.get() is not None
@@ -61,7 +61,7 @@ class Table():
         self.api.update_table_property(self.team_id, self.project_id, self.table_name, body=action)
 
     def update_schema(self, schema):
-        self.update("schema", schema);
+        self.update("schema", json.dumps(schema));
         
     def put(self, data, file_name=None, tag=None, content_type=None):
         if file_name is None or file_name.strip() == "":
