@@ -96,7 +96,7 @@ class Table():
         if r.status_code == 303:
             return r.headers.get('Location')
         else:
-            raise BaseException("Get DataFile content failed: " % str(r.status_code))
+            raise BaseException("Get DataFile content failed: %s" % str(r.status_code))
     
     def _read_df(self, file_name, format):
         url = self._get_file_url(file_name)
