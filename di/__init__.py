@@ -6,7 +6,7 @@ import json
 import pandas
 
 class Project():
-    def __init__(self, project, access_token, host=None):
+    def __init__(self, project, access_token, host=None, ssl=True):
         self.project = project.strip('/')
         s = self.project.split("/")
         if len(s) != 3:
@@ -22,7 +22,8 @@ class Project():
         cfg = sw.Configuration()
         #cfg.api_key["token"] = access_token
         
-        cfg.host = ("https://" + self.host if host is None else host) + "/api/v1"
+        scheme = "https://" if ssl else "http://"
+        cfg.host = scheme + (self.host if host is None else host) + "/api/v1"
 
         self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer "+access_token)
 
@@ -45,8 +46,14 @@ class Table():
         return self.api.list_tables(self.team_id, self.project_id)
 
     def get(self, get_schema=False):
-        return self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
-    
+        t = None
+        try:
+            self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
+        except sw.rest.ApiException as e:
+            if(e.status != 404):
+                raise e
+        return t
+
     def exists(self):
         return self.get() is not None
         
