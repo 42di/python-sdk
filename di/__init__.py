@@ -50,22 +50,31 @@ class Table():
         try:
             self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
         except sw.rest.ApiException as e:
-            if(e.status != 404):
-                raise e
+            if e.status != 404:
+                _err_format(e)
         return t
 
     def exists(self):
         return self.get() is not None
         
     def create(self):
-        self.api.update_table(self.team_id, self.project_id, self.table_name)
+        try:
+            self.api.update_table(self.team_id, self.project_id, self.table_name)
+        except sw.rest.ApiException as e:
+            _err_format(e)
 
     def delete(self):
-        self.api.delete_table(self.team_id, self.project_id, self.table_name)
+        try:
+            self.api.delete_table(self.team_id, self.project_id, self.table_name)
+        except sw.rest.ApiException as e:
+            _err_format(e)
 
     def update(self, prop, value):
         action = sw.PatchAction(action="UPDATE", _property=prop, value=value)
-        self.api.update_table_property(self.team_id, self.project_id, self.table_name, body=action)
+        try:
+            self.api.update_table_property(self.team_id, self.project_id, self.table_name, body=action)
+        except sw.rest.ApiException as e:
+            _err_format(e)
 
     def update_schema(self, schema):
         self.update("schema", json.dumps(schema));
@@ -77,8 +86,10 @@ class Table():
             tag = ""
         if content_type is None or content_type.strip() == "":
             content_type = ""
-
-        self.api.put_table_data_file(self.team_id, self.project_id, self.table_name, file_name , x_di_tag=tag, content_type=content_type, body=data)
+        try:
+            self.api.put_table_data_file(self.team_id, self.project_id, self.table_name, file_name , x_di_tag=tag, content_type=content_type, body=data)
+        except sw.rest.ApiException as e:
+            _err_format(e)
 
     def put_csv(self, df, file_name=None, tag=None):
         body = df.to_csv()
@@ -162,3 +173,15 @@ def read(identity, token):
     project_id, table_name = _parse_identity(identity)
     project = Project(project_id, token)
     return project.table(table_name).read()
+
+class DIException(Exception):
+    def __init__(self, status, code, msg):
+        self.status = status
+        self.code = code
+        self.msg = msg
+        Exception.__init__(self, self.status, "HTTP Status: %s, Code: %s, Message: %s" % (self.status, self.code, self.msg))
+
+def _err_format(e):
+    err = json.loads(e.body)
+    
+    raise DIException(e.status, err["code"], err["message"]) from None
