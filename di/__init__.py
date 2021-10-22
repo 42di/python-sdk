@@ -48,7 +48,7 @@ class Table():
     def get(self, get_schema=False):
         t = None
         try:
-            self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
+            t = self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
         except sw.rest.ApiException as e:
             if e.status != 404:
                 _err_format(e)
