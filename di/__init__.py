@@ -5,7 +5,7 @@ import swagger_client as sw
 import json
 import pandas
 import warnings
-warnings.filterwarnings('default')
+#warnings.filterwarnings('default')
 
 SSL = True
 
