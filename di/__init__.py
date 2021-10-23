@@ -4,6 +4,10 @@ from requests import status_codes
 import swagger_client as sw
 import json
 import pandas
+import warnings
+warnings.filterwarnings('default')
+
+SSL = True
 
 class Project():
     def __init__(self, project, access_token, host=None, ssl=True):
@@ -28,27 +32,35 @@ class Project():
         self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer "+access_token)
 
     def table(self, table_name):
-        return Table(self.team_id, self.project_id, table_name, self.sw_client, self.access_token)
+        warnings.warn("Deprecated, use dataset instead.", DeprecationWarning)
+        return Dataset(self.team_id, self.project_id, table_name, self.sw_client, self.access_token)
 
+    def dataset(self, dataset_id):
+        return Dataset(self.team_id, self.project_id, dataset_id, self.sw_client, self.access_token)
+    
     def list_tables(self):
-        return self.table(None).list()
+        warnings.warn("Deprecated, use list_datasets instead.", DeprecationWarning)
+        return self.dataset(None).list()
 
-class Table():
-    def __init__(self, team_id, project_id, table_name, sw_client, token=None):
+    def list_datasets(self):
+        return self.dataset.list()
+
+class Dataset():
+    def __init__(self, team_id, project_id, dataset_id, sw_client, token=None):
         self.team_id = team_id
         self.project_id = project_id
-        self.table_name = table_name
+        self.dataset_id = dataset_id
         self.sw_client = sw_client
-        self.api = sw.TablesApi(self.sw_client)
+        self.api = sw.DatasetsApi(self.sw_client)
         self.token = token
 
     def list(self):
-        return self.api.list_tables(self.team_id, self.project_id)
+        return self.api.list_datasets(self.team_id, self.project_id)
 
     def get(self, get_schema=False):
         t = None
         try:
-            t = self.api.get_table(self.team_id, self.project_id, self.table_name, schema=get_schema)
+            t = self.api.get_dataset(self.team_id, self.project_id, self.dataset_id, schema=get_schema)
         except sw.rest.ApiException as e:
             if e.status != 404:
                 _err_format(e)
@@ -59,20 +71,20 @@ class Table():
         
     def create(self):
         try:
-            self.api.update_table(self.team_id, self.project_id, self.table_name)
+            self.api.update_dataset(self.team_id, self.project_id, self.dataset_id)
         except sw.rest.ApiException as e:
             _err_format(e)
 
     def delete(self):
         try:
-            self.api.delete_table(self.team_id, self.project_id, self.table_name)
+            self.api.delete_dataset(self.team_id, self.project_id, self.dataset_id)
         except sw.rest.ApiException as e:
             _err_format(e)
 
     def update(self, prop, value):
         action = sw.PatchAction(action="UPDATE", _property=prop, value=value)
         try:
-            self.api.update_table_property(self.team_id, self.project_id, self.table_name, body=action)
+            self.api.update_dataset_property(self.team_id, self.project_id, self.dataset_id, body=action)
         except sw.rest.ApiException as e:
             _err_format(e)
 
@@ -87,7 +99,7 @@ class Table():
         if content_type is None or content_type.strip() == "":
             content_type = ""
         try:
-            self.api.put_table_data_file(self.team_id, self.project_id, self.table_name, file_name , x_di_tag=tag, content_type=content_type, body=data)
+            self.api.put_dataset_data_file(self.team_id, self.project_id, self.dataset_id, file_name , x_di_tag=tag, content_type=content_type, body=data)
         except sw.rest.ApiException as e:
             _err_format(e)
 
@@ -100,13 +112,13 @@ class Table():
         self.put(body, file_name, tag, "application/parquet")
 
     def files(self):
-        return self.api.list_table_data_files(self.team_id, self.project_id, self.table_name)
+        return self.api.list_dataset_data_files(self.team_id, self.project_id, self.dataset_id)
 
     def get_file_meta(self, data_file_name):
-        return self.api.get_table_data_file_meta(self.team_id, self.project_id, self.table_name, data_file_name)
+        return self.api.get_dataset_data_file_meta(self.team_id, self.project_id, self.dataset_id, data_file_name)
 
     def _get_file_url(self, file_name):
-        url = '/'.join([self.sw_client.configuration.host, "teams", self.team_id, "projects", self.project_id, "tables", self.table_name, "data", file_name])
+        url = '/'.join([self.sw_client.configuration.host, "teams", self.team_id, "projects", self.project_id, "datasets", self.dataset_id, "data", file_name])
         if self.token:
             url += "?token=" + self.token
 
@@ -133,6 +145,11 @@ class Table():
             dfs.append(df)
         return pandas.concat(dfs)
         
+def Table(Dataset):
+    def __init__(self, team_id, project_id, table_name, sw_client, token=None):
+        Dataset.__init__(team_id, project_id, table_name, sw_client, token)
+        warnings.warn("Deprecated, use Dataset instead.", DeprecationWarning)
+
 def schema(df):
     columns = []
     for name in df.index.names:
@@ -153,26 +170,26 @@ def _parse_identity(identity):
     if len(s) != 4:
         raise ValueError('invalid identity, it shold be like 42di.cn/your_id/your_project/your_table')
     project_id = '/'.join(s[:-1])
-    table_name = s[-1:][0]
-    return (project_id, table_name)
+    dataset_id = s[-1:][0]
+    return (project_id, dataset_id)
 
-def put(identity, df, token, create_table=True, update_schema=False):
-    project_id, table_name = _parse_identity(identity)
-    project = Project(project_id, token)
+def put(identity, df, token, create=True, update_schema=False):
+    project_id, dataset_id = _parse_identity(identity)
+    project = Project(project_id, token, ssl=SSL)
+    
+    dataset = project.dataset(dataset_id)
+    if not dataset.exists() and create:
+        dataset.create()
 
-    table = project.table(table_name)
-    if not table.exists() and create_table:
-        table.create()
-
-    table.put_parquet(df)
+    dataset.put_parquet(df)
 
     if update_schema:
-        table.update_schema(schema(df))
+        dataset.update_schema(schema(df))
 
 def read(identity, token):
-    project_id, table_name = _parse_identity(identity)
-    project = Project(project_id, token)
-    return project.table(table_name).read()
+    project_id, dataset_id = _parse_identity(identity)
+    project = Project(project_id, token, ssl=SSL)
+    return project.dataset(dataset_id).read()
 
 class DIException(Exception):
     def __init__(self, status, code, msg):
@@ -182,6 +199,10 @@ class DIException(Exception):
         Exception.__init__(self, self.status, "HTTP Status: %s, Code: %s, Message: %s" % (self.status, self.code, self.msg))
 
 def _err_format(e):
-    err = json.loads(e.body)
+    err = {}
+    try:
+        err = json.loads(e.body)
+    except json.decoder.JSONDecodeError as je:
+        err = {"code": "JSONDecodeError", "message": je}
     
     raise DIException(e.status, err["code"], err["message"]) from None

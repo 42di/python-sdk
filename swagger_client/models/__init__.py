@@ -16,10 +16,11 @@ from __future__ import absolute_import
 # import models into model package
 from swagger_client.models.board import Board
 from swagger_client.models.data_file import DataFile
+from swagger_client.models.dataset import Dataset
 from swagger_client.models.error_message import ErrorMessage
 from swagger_client.models.patch_action import PatchAction
 from swagger_client.models.project import Project
-from swagger_client.models.table import Table
+from swagger_client.models.project_sub import ProjectSub
 from swagger_client.models.team import Team
 from swagger_client.models.token import Token
 from swagger_client.models.topic import Topic
