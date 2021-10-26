@@ -10,7 +10,7 @@ import warnings
 SSL = True
 
 class Project():
-    def __init__(self, project, access_token, host=None, ssl=True):
+    def __init__(self, project, access_token, host=None):
         self.project = project.strip('/')
         s = self.project.split("/")
         if len(s) != 3:
@@ -25,8 +25,8 @@ class Project():
 
         cfg = sw.Configuration()
         #cfg.api_key["token"] = access_token
-        
-        scheme = "https://" if ssl else "http://"
+
+        scheme = "https://" if SSL else "http://"
         cfg.host = scheme + (self.host if host is None else host) + "/api/v1"
 
         self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer "+access_token)
@@ -112,7 +112,10 @@ class Dataset():
         self.put(body, file_name, tag, "application/parquet")
 
     def files(self):
-        return self.api.list_dataset_data_files(self.team_id, self.project_id, self.dataset_id)
+        try:
+            return self.api.list_dataset_data_files(self.team_id, self.project_id, self.dataset_id)
+        except sw.rest.ApiException as e:
+            _err_format(e)
 
     def get_file_meta(self, data_file_name):
         return self.api.get_dataset_data_file_meta(self.team_id, self.project_id, self.dataset_id, data_file_name)
@@ -137,13 +140,17 @@ class Dataset():
         else:
             raise BaseException("File format unsupported.")
 
-    def read(self):
+    def read(self, file_name=[]):
+        filters = set(file_name)
+
         dfs = []
         files = self.files()
         for f in files:
+            if len(file_name) > 0 and f.name not in filters:
+                continue
             df = self._read_df(f.name, f.content_type)
             dfs.append(df)
-        return pandas.concat(dfs)
+        return None if len(dfs) == 0 else pandas.concat(dfs)
         
 def Table(Dataset):
     def __init__(self, team_id, project_id, table_name, sw_client, token=None):
@@ -175,7 +182,7 @@ def _parse_identity(identity):
 
 def put(identity, df, token, create=True, update_schema=False):
     project_id, dataset_id = _parse_identity(identity)
-    project = Project(project_id, token, ssl=SSL)
+    project = Project(project_id, token)
     
     dataset = project.dataset(dataset_id)
     if not dataset.exists() and create:
@@ -188,7 +195,7 @@ def put(identity, df, token, create=True, update_schema=False):
 
 def read(identity, token):
     project_id, dataset_id = _parse_identity(identity)
-    project = Project(project_id, token, ssl=SSL)
+    project = Project(project_id, token)
     return project.dataset(dataset_id).read()
 
 class DIException(Exception):
