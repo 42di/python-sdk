@@ -15,8 +15,10 @@
 from __future__ import absolute_import
 
 # import apis into sdk package
+from swagger_client.api.analysis_api import AnalysisApi
 from swagger_client.api.boards_api import BoardsApi
 from swagger_client.api.datasets_api import DatasetsApi
+from swagger_client.api.insights_api import InsightsApi
 from swagger_client.api.projects_api import ProjectsApi
 from swagger_client.api.teams_api import TeamsApi
 from swagger_client.api.users_api import UsersApi
@@ -24,10 +26,16 @@ from swagger_client.api.users_api import UsersApi
 from swagger_client.api_client import ApiClient
 from swagger_client.configuration import Configuration
 # import models into sdk package
+from swagger_client.models.algorithm import Algorithm
+from swagger_client.models.analysis_job import AnalysisJob
+from swagger_client.models.analysis_job_description import AnalysisJobDescription
+from swagger_client.models.analysis_job_description_datasource import AnalysisJobDescriptionDatasource
+from swagger_client.models.analysis_job_status import AnalysisJobStatus
 from swagger_client.models.board import Board
 from swagger_client.models.data_file import DataFile
 from swagger_client.models.dataset import Dataset
 from swagger_client.models.error_message import ErrorMessage
+from swagger_client.models.insight import Insight
 from swagger_client.models.patch_action import PatchAction
 from swagger_client.models.project import Project
 from swagger_client.models.project_sub import ProjectSub

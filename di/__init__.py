@@ -102,6 +102,14 @@ class ResourceId():
     def str(self):
         return self.__str__()
 
+def _create_sw_client(host, token):
+    cfg = sw.Configuration()
+    #cfg.api_key["token"] = token
+    scheme = "https://" if SSL else "http://"
+    cfg.host = scheme + host + "/api/v1"
+
+    return sw.ApiClient(cfg, "Authorization", "Bearer " + token)
+
 class Project():
     def __init__(self, project, access_token=None):
         global SSL
@@ -123,13 +131,7 @@ class Project():
         if not self.access_token:
             raise ValueError("access token required.")
 
-        cfg = sw.Configuration()
-        #cfg.api_key["token"] = access_token
-
-        scheme = "https://" if SSL else "http://"
-        cfg.host = scheme + self.host + "/api/v1"
-
-        self.sw_client = sw.ApiClient(cfg, "Authorization", "Bearer " + self.access_token)
+        self.sw_client = _create_sw_client(self.host, self.access_token)
 
     def dataset(self, dataset_id):
         return Dataset(self.team_id, self.project_id, dataset_id, self.sw_client, self.access_token)

@@ -14,10 +14,16 @@
 from __future__ import absolute_import
 
 # import models into model package
+from swagger_client.models.algorithm import Algorithm
+from swagger_client.models.analysis_job import AnalysisJob
+from swagger_client.models.analysis_job_description import AnalysisJobDescription
+from swagger_client.models.analysis_job_description_datasource import AnalysisJobDescriptionDatasource
+from swagger_client.models.analysis_job_status import AnalysisJobStatus
 from swagger_client.models.board import Board
 from swagger_client.models.data_file import DataFile
 from swagger_client.models.dataset import Dataset
 from swagger_client.models.error_message import ErrorMessage
+from swagger_client.models.insight import Insight
 from swagger_client.models.patch_action import PatchAction
 from swagger_client.models.project import Project
 from swagger_client.models.project_sub import ProjectSub

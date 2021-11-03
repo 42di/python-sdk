@@ -6,7 +6,7 @@ elif isinstance(body, str) or isinstance(body, bytes):
     else:
         request_body = body
 
-table_api.py: 801
+datasets_api.py: 801
 def put_table_data_file_with_http_info
 
 # HTTP header `Content-Type`
